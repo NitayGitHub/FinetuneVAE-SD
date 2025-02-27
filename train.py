@@ -147,9 +147,9 @@ class FinetuneVAE(pl.LightningModule):
             rec_loss = rec_loss.pow(2).mean() * rec_loss.size(1) #
         lpips_loss = self.lpips_loss_fn(pred, target).mean()
         loss = rec_loss + self.lpips_loss_weight * lpips_loss # + self.kl_weight * kl_loss
-        self.log('rec_loss', rec_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False)
-        self.log('lpips_loss', lpips_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False)
-        # self.log('kl_loss', kl_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False)
+        self.log('rec_loss', rec_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False, sync_dist=True)
+        self.log('lpips_loss', lpips_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False, sync_dist=True)
+        # self.log('kl_loss', kl_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False, sync_dist=True)
         return loss
     def configure_optimizers(self):
         if self.optim == 'sgd':
@@ -201,9 +201,9 @@ class FinetuneVAE(pl.LightningModule):
         rec_loss = torch.stack([x['rec_loss'] for x in self.validation_step_outputs]).mean()
         lpips_loss = torch.stack([x['lpips_loss'] for x in self.validation_step_outputs]).mean()
     
-        self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-        self.log('val_rec_loss', rec_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-        self.log('val_lpips_loss', lpips_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True, sync_dist=True)
+        self.log('val_rec_loss', rec_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True, sync_dist=True)
+        self.log('val_lpips_loss', lpips_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True, sync_dist=True)
     
         # Clear outputs after logging
         self.validation_step_outputs.clear()
