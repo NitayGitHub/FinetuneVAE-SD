@@ -270,7 +270,7 @@ if __name__ == '__main__':
     
     trainer = Trainer(min_epochs=1, 
                           max_epochs=args.num_epochs, 
-                        precision=args.precision,
+                        precision="16-true",
                           strategy=args.strategy,
                           accelerator="gpu",
                           devices=args.n_gpus, 
