@@ -217,7 +217,17 @@ def argument_inputs():
                         help='The directory that contains the images, including original folder and the emotion folders.')
     parser.add_argument('--ema_decay',  type=float, default=0.99 ,help="Use use_ema") 
 
-    parser.add_argument('--precision', type=int, default=16, choices=[16, 32])
+    parser.add_argument('--precision', type=str, default="32", choices=[
+        "32-true",        # Default (32-bit precision)
+        "32",             # Same as 32-true
+        "16-mixed",       # 16-bit mixed precision (model weights remain in torch.float32)
+        "bf16-mixed",     # 16-bit bfloat mixed precision (model weights remain in torch.float32)
+        "transformer-engine",  # 8-bit mixed precision via TransformerEngine (model weights cast to torch.bfloat16)
+        "16-true",        # 16-bit precision (model weights cast to torch.float16)
+        "bf16-true",      # 16-bit bfloat precision (model weights cast to torch.bfloat16)
+        "64-true",        # 64-bit (double) precision (model weights cast to torch.float64)
+    ], help="Precision setting for the Trainer.")
+
     parser.add_argument('--image_size', type=int, default=384)
     parser.add_argument('--batch_size', type=int, default=32)
 
