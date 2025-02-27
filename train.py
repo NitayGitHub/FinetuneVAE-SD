@@ -193,16 +193,19 @@ class FinetuneVAE(pl.LightningModule):
             self.model_ema.copy_to(self.model)
         if self.current_epoch == self.trainer.max_epochs // 3 * 2:
             self.lpips_loss_weight = self.lpips_loss_weight * 0.1
-    def validation_epoch_end(self, validation_step_outputs):
+    def on_validation_epoch_end(self):
         self.log_one_batch = False
-        val_loss = torch.stack([x['val_loss'] for x in validation_step_outputs]).mean()
-        rec_loss = torch.stack([x['rec_loss'] for x in validation_step_outputs]).mean()
-        lpips_loss = torch.stack([x['lpips_loss'] for x in validation_step_outputs]).mean()
-        # kl_loss = torch.stack([x['kl_loss'] for x in validation_step_outputs]).mean()
+        val_loss = torch.stack([x['val_loss'] for x in self.validation_step_outputs]).mean()
+        rec_loss = torch.stack([x['rec_loss'] for x in self.validation_step_outputs]).mean()
+        lpips_loss = torch.stack([x['lpips_loss'] for x in self.validation_step_outputs]).mean()
+        
         self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_rec_loss', rec_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_lpips_loss', lpips_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-        # self.log('val_kl_loss', kl_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        
+        # Clear outputs after logging
+        self.validation_step_outputs.clear()
+
 
 
 def get_vae_weights( input_path):
