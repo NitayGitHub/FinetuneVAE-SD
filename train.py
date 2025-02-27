@@ -158,7 +158,7 @@ class FinetuneVAE(pl.LightningModule):
             raise NotImplementedError
         return optimizer
     def validation_step(self, batch, batch_idx):  
-            target, name = batch
+        target, name = batch
         if self.precision == 16:
             target = target.half()
         posterior = self.model.encode(target)
