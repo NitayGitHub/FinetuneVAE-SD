@@ -100,7 +100,8 @@ class FinetuneVAE(pl.LightningModule):
         self.precision = precision
         self.log_dir = log_dir
         self.log_one_batch = False
-        self.use_ema = ema_decay > 0     
+        self.use_ema = ema_decay > 0
+        self.validation_step_outputs = []
         if self.use_ema :    
             self.ema_decay = ema_decay
             assert 0. < ema_decay < 1.
@@ -157,21 +158,22 @@ class FinetuneVAE(pl.LightningModule):
             raise NotImplementedError
         return optimizer
     def validation_step(self, batch, batch_idx):  
-        target, name = batch
+            target, name = batch
         if self.precision == 16:
             target = target.half()
         posterior = self.model.encode(target)
         z = posterior.mode()
         pred = self.model.decode(z)
-        # kl_loss = posterior.kl()
-        # kl_loss = kl_loss.mean() # torch.sum(kl_loss) / kl_loss.shape[0]
-        rec_loss = torch.abs(target.contiguous() - pred.contiguous())
-        rec_loss = rec_loss.mean() # torch.sum(rec_loss) / (rec_loss.shape[0] *  rec_loss.shape[2] * rec_loss.shape[3])
+        
+        rec_loss = torch.abs(target.contiguous() - pred.contiguous()).mean()
         lpips_loss = self.lpips_loss_fn(pred, target).mean()
-        loss = rec_loss + self.lpips_loss_weight * lpips_loss # + self.kl_weight * kl_loss
-        # self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        loss = rec_loss + self.lpips_loss_weight * lpips_loss
+        
         self.log_images(target, pred, name)
-        return {'val_loss': loss, "rec_loss": rec_loss, "lpips_loss": lpips_loss}
+    
+        # Store outputs in a list
+        self.validation_step_outputs.append({'val_loss': loss, "rec_loss": rec_loss, "lpips_loss": lpips_loss})
+
     def log_images(self, input, output, names):
         if self.log_one_batch: 
             return 
@@ -198,10 +200,13 @@ class FinetuneVAE(pl.LightningModule):
         val_loss = torch.stack([x['val_loss'] for x in self.validation_step_outputs]).mean()
         rec_loss = torch.stack([x['rec_loss'] for x in self.validation_step_outputs]).mean()
         lpips_loss = torch.stack([x['lpips_loss'] for x in self.validation_step_outputs]).mean()
-        
+    
         self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_rec_loss', rec_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_lpips_loss', lpips_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    
+        # Clear outputs after logging
+        self.validation_step_outputs.clear()
 
 def get_vae_weights( input_path):
     pretrained_weights = torch.load(input_path)
