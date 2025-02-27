@@ -83,7 +83,6 @@ class FinetuneVAE(pl.LightningModule):
                  vae_weights=None,
                  device=torch.device('cuda'),
                  ema_decay=0.999,
-                 precision=32,
                  log_dir=None):
         super().__init__()
         self.kl_weight = kl_weight
@@ -97,7 +96,6 @@ class FinetuneVAE(pl.LightningModule):
         self.model =  instantiate_from_config(vae_config)
         self.model.load_state_dict(vae_weights, strict=True)
         self.model.train()
-        self.precision = precision
         self.log_dir = log_dir
         self.log_one_batch = False
         self.use_ema = ema_decay > 0
@@ -133,8 +131,6 @@ class FinetuneVAE(pl.LightningModule):
         return self.model(x)
     def training_step(self, batch, batch_idx):
         target, _ = batch
-        if self.precision == 16:
-            target = target.half()
         posterior = self.model.encode(target)
         z = posterior.sample()
         pred = self.model.decode(z)
@@ -159,13 +155,9 @@ class FinetuneVAE(pl.LightningModule):
         return optimizer
     def validation_step(self, batch, batch_idx):  
         target, name = batch
-        if self.precision == 16:
-            target = target.half()
-
         posterior = self.model.encode(target)
         z = posterior.mode()
         pred = self.model.decode(z)
-        
         rec_loss = torch.abs(target.contiguous() - pred.contiguous()).mean()
         lpips_loss = self.lpips_loss_fn(pred, target).mean()
         loss = rec_loss + self.lpips_loss_weight * lpips_loss
@@ -270,7 +262,7 @@ if __name__ == '__main__':
     
     trainer = Trainer(min_epochs=1, 
                           max_epochs=args.num_epochs, 
-                        precision="16-true",
+                        precision=args.precision,
                           strategy=args.strategy,
                           accelerator="gpu",
                           devices=args.n_gpus, 
