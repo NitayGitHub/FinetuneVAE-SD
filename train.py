@@ -13,7 +13,6 @@ import random
 import pytorch_lightning as pl
 from torchvision import transforms
 from torch.utils.data import Dataset
-from torch.cuda.amp import autocast
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
 import wandb
@@ -136,10 +135,9 @@ class FinetuneVAE(pl.LightningModule):
         target, _ = batch
         if self.precision == 16:
             target = target.half()
-        with autocast(enabled=True):
-            posterior = self.model.encode(target)
-            z = posterior.sample()
-            pred = self.model.decode(z)
+        posterior = self.model.encode(target)
+        z = posterior.sample()
+        pred = self.model.decode(z)
         # kl_loss = posterior.kl()
         # kl_loss = kl_loss.mean() 
         rec_loss = torch.abs(target.contiguous() - pred.contiguous())
@@ -164,10 +162,9 @@ class FinetuneVAE(pl.LightningModule):
         if self.precision == 16:
             target = target.half()
 
-        with autocast(enabled=True):
-            posterior = self.model.encode(target)
-            z = posterior.mode()
-            pred = self.model.decode(z)
+        posterior = self.model.encode(target)
+        z = posterior.mode()
+        pred = self.model.decode(z)
         
         rec_loss = torch.abs(target.contiguous() - pred.contiguous()).mean()
         lpips_loss = self.lpips_loss_fn(pred, target).mean()
