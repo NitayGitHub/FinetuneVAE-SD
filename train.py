@@ -146,7 +146,7 @@ class FinetuneVAE(pl.LightningModule):
         # self.log('kl_loss', kl_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False, sync_dist=True)
         return loss
     def configure_optimizers(self):
-        optimizer = optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.SGD(self.model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
         return optimizer
     def validation_step(self, batch, batch_idx):  
         target, name = batch
