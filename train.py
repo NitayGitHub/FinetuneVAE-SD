@@ -267,8 +267,9 @@ if __name__ == '__main__':
     trainer = Trainer(min_epochs=1, 
                           max_epochs=args.num_epochs, 
                         precision=args.precision,
-                          strategy=args.strategy, 
-                          gpus=args.n_gpus, 
+                          strategy=args.strategy,
+                          accelerator="gpu",
+                          devices=args.n_gpus, 
                           num_sanity_val_steps=1 if args.val_size > 0 else 0,
                           default_root_dir=log_dir,)
     
