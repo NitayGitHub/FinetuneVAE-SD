@@ -78,7 +78,6 @@ class FinetuneVAE(pl.LightningModule):
                  lr=1e-4, 
                  momentum=0.9, 
                  weight_decay=5e-4,
-                 optim='sgd',
                  vae_config=None,
                  vae_weights=None,
                  device=torch.device('cuda'),
@@ -92,7 +91,6 @@ class FinetuneVAE(pl.LightningModule):
         self.lr = lr
         self.momentum = momentum
         self.weight_decay = weight_decay
-        self.optim = optim
         self.model =  instantiate_from_config(vae_config)
         self.model.load_state_dict(vae_weights, strict=True)
         self.model.train()
@@ -148,10 +146,7 @@ class FinetuneVAE(pl.LightningModule):
         # self.log('kl_loss', kl_loss, on_step=True, on_epoch=False, prog_bar=True, logger=False, sync_dist=True)
         return loss
     def configure_optimizers(self):
-        if self.optim == 'sgd':
-            optimizer = optim.SGD(self.model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-        else:
-            raise NotImplementedError
+        optimizer = optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         return optimizer
     def validation_step(self, batch, batch_idx):  
         target, name = batch
