@@ -202,11 +202,6 @@ class FinetuneVAE(pl.LightningModule):
         self.log('val_loss', val_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_rec_loss', rec_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
         self.log('val_lpips_loss', lpips_loss, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-        
-        # Clear outputs after logging
-        self.validation_step_outputs.clear()
-
-
 
 def get_vae_weights( input_path):
     pretrained_weights = torch.load(input_path)
