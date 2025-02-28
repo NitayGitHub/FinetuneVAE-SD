@@ -129,6 +129,7 @@ class FinetuneVAE(pl.LightningModule):
         return self.model(x)
     def training_step(self, batch, batch_idx):
         target, _ = batch
+        target = target.half()
         posterior = self.model.encode(target)
         z = posterior.sample()
         pred = self.model.decode(z)
@@ -150,6 +151,7 @@ class FinetuneVAE(pl.LightningModule):
         return optimizer
     def validation_step(self, batch, batch_idx):  
         target, name = batch
+        target = target.half()
         posterior = self.model.encode(target)
         z = posterior.mode()
         pred = self.model.decode(z)
