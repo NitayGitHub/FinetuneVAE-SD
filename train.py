@@ -170,6 +170,7 @@ class FinetuneVAE(pl.LightningModule):
             img2 = img2.cpu().detach().numpy().transpose(1, 2, 0)
             img1 = (img1 + 1) / 2
             img2 = (img2 + 1) / 2
+            img1, img2 = img1.clip(0.0, 1.0), img2.clip(0.0, 1.0)
             diff = abs(img1 - img2)
             img = np.concatenate([img1, img2, diff], axis=1)
             img = (img * 255).astype(np.uint8)
